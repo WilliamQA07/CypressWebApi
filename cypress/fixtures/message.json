@@ -1,0 +1,7 @@
+{
+    "welcomeSucess": "Welcome to JPetStore 6",
+    "enterStoreSucess": "Sign In",
+    "loginSucess": "My Account",
+    "usernameOrPasswordInvalid": "Invalid username or password.",
+    "orderFinishSucess": "Thank you, your order has been submitted."
+}

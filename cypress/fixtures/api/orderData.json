@@ -1,0 +1,15 @@
+{
+    "order.cardType": "Visa",
+    "order.creditCard": "999 9999 9999 9999",
+    "order.expiryDate": "12/03",
+    "order.billToFirstName": "Nona",
+    "order.billToLastName": "Mante",
+    "order.billAddress1": "4122 Johns Forge",
+    "order.billAddress2": "Apto 45B",
+    "order.billCity": "East Derick",
+    "order.billState": "BV",
+    "order.billZip": "96954-1748",
+    "order.billCountry": "Mauritania",
+    "newOrder": "Continue"
+  }
+  
