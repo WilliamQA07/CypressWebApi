@@ -46,7 +46,7 @@ jobs:
             TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
             TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
             TWILIO_WHATSAPP_NUMBER: ${{ secrets.TWILIO_WHATSAPP_NUMBER }}
-            TO_WHATSAPP_NUMBER: "+558898141112"  # Número de WhatsApp que receberá a mensagem
+            TO_WHATSAPP_NUMBER: "whatsapp:+558898141112"  # Número de WhatsApp que receberá a mensagem
         run: |
           if [ -z "${GITHUB_RUN_URL}" ]; then
             GITHUB_RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
