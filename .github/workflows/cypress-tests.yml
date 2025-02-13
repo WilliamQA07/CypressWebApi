@@ -40,22 +40,28 @@ jobs:
             cypress/videos/
             cypress/screenshots/
 
-      - name: Send WhatsApp notification on failure
+            
+      # 🔹 Enviar e-mail via SMTP do Outlook em caso de falha
+      - name: Send Email Notification on Failure
         if: failure()
-        env:
-            TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
-            TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
-            TWILIO_WHATSAPP_NUMBER: ${{ secrets.TWILIO_WHATSAPP_NUMBER }}
-            TO_WHATSAPP_NUMBER: "whatsapp:+558898141112"  # Número de WhatsApp que receberá a mensagem
-        run: |
-          if [ -z "${GITHUB_RUN_URL}" ]; then
-            GITHUB_RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          fi
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.office365.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "❌ Falha nos Testes do Cypress 🚨"
+          to: ${{ secrets.EMAIL_TO }}
+          from: "GitHub Actions <${{ secrets.SMTP_USERNAME }}>"
+          body: |
+            **⚠️ ATENÇÃO!**
 
-          MESSAGE="⚠️ O job *Cypress Tests* falhou no commit: ${GITHUB_SHA} no projeto: ${GITHUB_REPOSITORY}. Verifique os relatórios de teste em: ${GITHUB_RUN_URL}"
+            O job *Cypress Tests* falhou no GitHub Actions.
 
-          curl -X POST "https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json" \
-          --data-urlencode "Body=${MESSAGE}" \
-          --data-urlencode "From=whatsapp:${TWILIO_WHATSAPP_NUMBER}" \
-          --data-urlencode "To=whatsapp:${TO_WHATSAPP_NUMBER}" \
-          -u "${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}"
+            📌 **Repositório:** ${{ github.repository }}
+            📌 **Commit:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            📌 **Autor:** ${{ github.actor }}
+            📌 **Logs:** [Ver detalhes da pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Por favor, verifique os relatórios e corrija os erros.
+          content_type: text/html
