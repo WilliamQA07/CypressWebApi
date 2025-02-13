@@ -8,7 +8,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 9 * * *'  # Agendamento para todo dia às 09:00 (UTC)
+    - cron: '0 9 * * *'  # Executa todo dia às 09:00 UTC (06:00 no Brasil)
 
 jobs:
   cypress:
@@ -40,14 +40,13 @@ jobs:
             cypress/videos/
             cypress/screenshots/
 
-            
       # 🔹 Enviar e-mail via SMTP do Outlook em caso de falha
       - name: Send Email Notification on Failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.office365.com
-          server_port: 587
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "❌ Falha nos Testes do Cypress 🚨"
