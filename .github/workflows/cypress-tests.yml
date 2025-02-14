@@ -1,4 +1,4 @@
-name: Cypress Tests
+name: Cypress Tests with Slack Notification
 
 on:
   push:
@@ -8,17 +8,17 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 9 * * *'  # Executa todo dia às 09:00 UTC (06:00 no Brasil)
+    - cron: '0 9 * * *'  # Executa todos os dias às 09:00 UTC
 
 jobs:
   cypress:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Checkout código
         uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v
         with:
           node-version: 18
 
@@ -40,27 +40,38 @@ jobs:
             cypress/videos/
             cypress/screenshots/
 
-      # 🔹 Enviar e-mail via SMTP do Outlook em caso de falha
-      - name: Send Email Notification on Failure
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.SMTP_SERVER }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "❌ Falha nos Testes do Cypress 🚨"
-          to: ${{ secrets.EMAIL_TO }}
-          from: "GitHub Actions <${{ secrets.SMTP_USERNAME }}>"
-          body: |
-            **⚠️ ATENÇÃO!**
-
-            O job *Cypress Tests* falhou no GitHub Actions.
-
-            📌 **Repositório:** ${{ github.repository }}
-            📌 **Commit:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-            📌 **Autor:** ${{ github.actor }}
-            📌 **Logs:** [Ver detalhes da pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            Por favor, verifique os relatórios e corrija os erros.
-          content_type: text/html
+      # 🔹 Enviar notificação para o Slack em caso de falha
+      - name: Send Slack Notification on Failure
+        if: failure()  # Só executa se o teste falhar
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "🚨 *Falha nos Testes do Cypress!*",
+            "attachments": [
+              {
+                "color": "danger",
+                "title": "Detalhes da falha",
+                "fields": [
+                  {
+                    "title": "Repositório",
+                    "value": "${{ github.repository }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Autor",
+                    "value": "${{ github.actor }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Commit",
+                    "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|Clique aqui para ver o commit>",
+                    "short": false
+                  },
+                  {
+                    "title": "Logs",
+                    "value": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Clique aqui para ver os detalhes>",
+                    "short": false
+                  }
+                ]
+              }
+            ]
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
