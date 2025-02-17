@@ -3,7 +3,7 @@ name: Integrate PR Content with ChatGPT
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   interact-with-chatgpt:
