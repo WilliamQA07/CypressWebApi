@@ -40,6 +40,13 @@ jobs:
             cypress/videos/
             cypress/screenshots/
 
+      - name: Usar OpenAI API
+        run: |
+          curl -X POST "https://api.openai.com/v1/completions" \
+          -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"model": "text-davinci-003", "prompt": "Diga Olá!", "max_tokens": 100}'
+
       # 🔹 Enviar notificação para o Slack em caso de falha
       - name: Send Slack Notification on Failure
         if: failure()  # Só executa se o teste falhar

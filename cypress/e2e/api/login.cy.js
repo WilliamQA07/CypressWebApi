@@ -7,7 +7,7 @@ describe('Validar funcionalidade de login', () => {
         it("Login com sucesso", function () {
             cy.loginApi(
                 Cypress.env('username'),
-                Cypress.env('passwordInvalid'),
+                Cypress.env('password'),
                 this.messageData.loginSucess
             )
         });
