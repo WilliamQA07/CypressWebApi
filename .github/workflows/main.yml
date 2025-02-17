@@ -1,51 +1,71 @@
-name: Code Review with ChatGPT
+name: Integrate PR Content with ChatGPT
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
-  review:
+  interact-with-chatgpt:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout código
+      - name: Check out repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  
 
-      - name: Instalar dependências
-        run: sudo apt-get install jq
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install jq
 
-      - name: Coletar Mudanças no Código
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Extract and Prepare PR Content
         run: |
-          git diff HEAD~1 HEAD > code_changes.diff
-          echo "Diff gerado:"
-          cat code_changes.diff
+          git fetch origin +refs/pull/${{ github.event.pull_request.number }}/merge
+          git checkout FETCH_HEAD
+          files_changed=$(git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD)
+          changes=""
+          for file in $files_changed; do
+            diff=$(git diff ${{ github.event.pull_request.base.sha }} HEAD -- $file)
+            changes+="${file}:\n${diff}\n"
+          done
+          # Encode changes to base64 to ensure safe transmission
+          encoded_changes=$(echo -n "$changes" | base64 -w 0)
+          echo "ENCODED_CHANGES=$encoded_changes" >> $GITHUB_ENV
 
-      - name: Enviar Código para Revisão no ChatGPT
+      - name: Call ChatGPT with PR content
         run: |
-          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
+            # Decode base64 changes to normal text (for debugging or if needed)
+            decoded_changes=$(echo "${{ env.ENCODED_CHANGES }}" | base64 --decode)
+  
+            # Use jq to create JSON payload safely
+            json_payload=$(jq -n --arg content "$decoded_changes" --arg additionalMessage "Voce é um desenvolvedor senior e esta analisando uma pull request, validando se o codigo tem uma más pratica, caso tenham informe os codigos que tenham as más pratica e uma possivel solução" '{
+              model: "gpt-4o-mini",
+              store: true,
+              messages: [
+                {role: "user", content: $additionalMessage},
+                {role: "user", content: $content}
+              ]
+            }')
+  
+            # Send request to OpenAI API
+            response=$(curl -s https://api.openai.com/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -d '{
-              "model": "gpt-4",
-              "messages": [
-                {"role": "system", "content": "Você é um especialista em revisão de código. Dê feedbacks detalhados, apontando melhorias, erros e boas práticas."},
-                {"role": "user", "content": "Revise o seguinte código e forneça feedbacks de melhorias:\n\n" + "$(cat code_changes.diff)"}
-              ],
-              "max_tokens": 500
-            }')
+            -d "$json_payload")
 
-          echo "## Feedback do ChatGPT:" > review_feedback.md
-          echo "$RESPONSE" | jq -r '.choices[0].message.content' >> review_feedback.md
+            # Extract the 'content' field from the response
+            content=$(echo $response | jq -r '.choices[0].message.content')
 
-      - name: Adicionar Comentário no Pull Request (se aplicável)
-        if: github.event_name == 'pull_request'
-        run: |
-          COMMENT=$(cat review_feedback.md)
-          curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"body\": \"$COMMENT\"}"
+            # Prepare the JSON body for the GitHub API request, escaping newlines and quotes
+            json_body=$(jq -n --arg body "$content" '{"body": $body}')
+
+            # Post the content as a comment to the pull request
+            curl -s \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "$json_body" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments
