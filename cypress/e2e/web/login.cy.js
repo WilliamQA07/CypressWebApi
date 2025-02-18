@@ -10,7 +10,7 @@ describe('Validar funcionalidade de login', () => {
             cy.validateTextVisible(this.messageData.enterStoreSucess)
         });
 
-        it('Realizar login com sucesso', function () {
+        it('Realizar login com teste', function () {
             cy.login(
                 Cypress.env('username'),
                 Cypress.env('password')
@@ -18,7 +18,7 @@ describe('Validar funcionalidade de login', () => {
             cy.validateTextVisible(this.messageData.loginSucess)
         });
 
-        it('Realizar login invalido', function () {
+        it('Realizar login invalido udhsufb', function () {
             cy.login(
                 Cypress.env('username'),
                 Cypress.env('passwordInvalid')
