@@ -4,7 +4,7 @@ describe('validar funcionalidade do carrinho', () => {
         before(() => {
             cy.loginApi(
                 Cypress.env('username'),
-                Cypress.env('password'),
+                cy.type('123456')),
                 "My Account"
             )
         })
@@ -20,15 +20,14 @@ describe('validar funcionalidade do carrinho', () => {
             cy.addProductCart(
                 this.productData.idLargeAngelfish,
                 this.cartData.shopping
-            )
+            )git 
         });
 
         it('Remover produto do carrinho', function () {
             cy.removeProductCart(
                 this.productData.idLargeAngelfish,
                 this.cartData.cartIsEmpty
-            )
-        });
+            )git 
 
         it('Abrir produto do carrinho', function () {
             cy.openProductCart(
